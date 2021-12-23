@@ -1,0 +1,235 @@
+---
+title: "half_pitch_plot"
+author: "Joseph Kroymann"
+date: "12/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This code is totally stolen from @FCrStats (https://github.com/FCrSTATS/StatsBomb_WomensData/blob/master/3.CreateShotMaps.md)
+
+```{r, include=FALSE}
+## turning off warnings + loading in ggplot2
+options(warn = -1)
+require(ggplot2)
+
+## defining variables related to dimensions of a statsbomb pitch
+ymin <- 0
+ymax <- 80
+xmin <- 60
+xmax <- 120
+
+## Defining features along the length
+boxEdgeOff <- 102
+sixYardOff <- 114
+penSpotOff <- 108
+halfwayline <- 60
+
+## Defining features along the width
+boxEdgeLeft <- 18
+boxEdgeRight <- 62
+sixYardLeft <- 30 
+sixYardRight <- 50
+goalPostLeft <- 36
+goalPostRight <- 44
+CentreSpot <- 40
+
+## other dimensions
+centreCirle_d <- 20
+
+#---------------------------------------------------------------------------------------------------------------------------
+
+## creating circle function for arc at the top of the box
+circle_fun <- function(center = c(0,0), diameter = 1, npoints = 100) {
+  r <- diameter/2
+  tt <- seq(0,2*pi,length.out = npoints)
+  xx <- center[1] + r * cos(tt)
+  yy <- center[2] + r * sin(tt)
+  return(data.frame(x = xx, y = yy))
+}
+
+## create leftD arc
+dArc <- circle_fun(c((40),(penSpotOff)),centreCirle_d,npoints = 1000)
+
+## remove part in box
+dArc <- dArc[which(dArc$y <= (boxEdgeOff)),]
+```
+
+```{r, echo=FALSE}
+## building a custom theme for the plot
+grass_colour <- "#ffffff" #white
+line_colour <- "#A9A9A9" # dark grey 
+background_colour <- "#ffffff" # white
+goal_colour <- "#000000" # black 
+
+theme_blankPitch <- function(size=12) {
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.length = unit(0, "lines"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.background = element_rect(fill = background_colour, colour = NA),
+        legend.key = element_rect(colour = background_colour, fill = background_colour),
+        legend.key.size = unit(1.2, "lines"),
+        legend.text = element_text(size = size),
+        legend.title = element_text(size = size, face = "bold", hjust = 0),
+        strip.background = element_rect(colour = background_colour, fill = background_colour, size = .5),
+        panel.background = element_rect(fill = background_colour, colour = background_colour),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.spacing = element_blank(),
+        plot.background = element_blank(),
+        plot.margin = unit(c(0,0,0,0), "lines"),
+        plot.title = element_text(size = size*1.2),
+        strip.text.y = element_text(colour = background_colour, size = size, angle = 270),
+        strip.text.x = element_text(size = size*1)
+        )
+}
+```
+
+```{r, echo=FALSE}
+# now for some actual plotting
+
+## mix matched limits due to rotating og dimensions to half plot
+ggplot() + xlim(c(ymin, ymax)) + ylim(c(xmin, xmax)) + 
+
+## adding the theme  
+theme_blankPitch() +
+  
+## adding base rectangle of the pitch
+geom_rect(aes(xmin = ymin, xmax = ymax, ymin = xmin, ymax = xmax), fill = grass_colour, colour = line_colour) +
+  
+## adding 18 yard box offensive
+geom_rect(aes(xmin = boxEdgeLeft, xmax = boxEdgeRight, ymin = boxEdgeOff, ymax = xmax), fill = grass_colour, colour = line_colour) +
+  
+## adding goal offensive
+geom_segment(aes(x = goalPostLeft, y = xmax, xend = goalPostRight, yend = xmax), colour = goal_colour, size = 1) + 
+  
+## adding six yard box offensive
+geom_rect(aes(xmin = sixYardLeft, xmax = sixYardRight, ymin = sixYardOff, ymax = xmax), fill = grass_colour, colour = line_colour) + 
+  
+## adding the arc circle
+geom_path(data = dArc, aes(x = x, y = y), colour = line_colour) + 
+  
+## adding penalty spot
+geom_point(aes(x = CentreSpot, y = penSpotOff), colour = line_colour)
+```
+
+
+```{r, echo=FALSE}
+# one final function
+statsBomb_halfPitch <- function(grass_colour, line_colour, background_colour, goal_colour) {
+  
+  shotmapxgcolors <- c("#192780", "#2a5d9f", "#40a7d0", "#87cdcf", "#e7f8e6", "#f4ef95", "#FDE960", 
+                       "#FCDC5F", "#F5B94D", "#F0983E", "#ED8A37", "#E66424", "#D54F1B", "#DC2608", 
+                       "#BF0000", "#7F0000", "#5F0000")
+  
+  theme_blankPitch <- function(size=12) {
+    theme(axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.length = unit(0, "lines"),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          legend.background = element_rect(fill = background_colour, colour = NA),
+          legend.key = element_rect(colour = background_colour, fill = background_colour),
+          legend.key.size = unit(1.2, "lines"),
+          legend.text = element_text(size = size),
+          legend.title = element_text(size = size, face = "bold", hjust = 0),
+          strip.background = element_rect(colour = background_colour, fill = background_colour, size = .5),
+          panel.background = element_rect(fill = background_colour, colour = background_colour),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.spacing = element_blank(),
+          plot.background = element_blank(),
+          plot.margin = unit(c(0,0,0,0), "lines"),
+          plot.title = element_text(size = size*1.2),
+          strip.text.y = element_text(colour = background_colour, size = size, angle = 270),
+          strip.text.x = element_text(size = size*1))}
+  
+  ## defining variables related to dimensions of a statsbomb pitch
+  ymin <- 0
+  ymax <- 80
+  xmin <- 60
+  xmax <- 120
+  
+  ## Defining features along the length
+  boxEdgeOff <- 102
+  sixYardOff <- 114
+  penSpotOff <- 108
+  halfwayline <- 60
+  
+  ## Defining features along the width
+  boxEdgeLeft <- 18
+  boxEdgeRight <- 62
+  sixYardLeft <- 30 
+  sixYardRight <- 50
+  goalPostLeft <- 36
+  goalPostRight <- 44
+  CentreSpot <- 40
+  
+  ## other dimensions
+  centreCirle_d <- 20
+  
+  ## creating circle function for arc at the top of the box
+  circle_fun <- function(center = c(0,0), diameter = 1, npoints = 100) {
+    r <- diameter/2
+    tt <- seq(0,2*pi,length.out = npoints)
+    xx <- center[1] + r * cos(tt)
+    yy <- center[2] + r * sin(tt)
+    return(data.frame(x = xx, y = yy))
+  }
+  
+  ## create leftD arc
+  dArc <- circle_fun(c((40),(penSpotOff)),centreCirle_d,npoints = 1000)
+  
+  ## remove part in box
+  dArc <- dArc[which(dArc$y <= (boxEdgeOff)),]
+  
+  p <- ## mix matched limits due to rotating og dimensions to half plot
+    ggplot() + xlim(c(ymin, ymax)) + ylim(c(xmin, xmax)) + 
+    
+    ## adding the theme  
+    theme_blankPitch() +
+      
+    ## adding base rectangle of the pitch
+    geom_rect(aes(xmin = ymin, xmax = ymax, ymin = xmin, ymax = xmax), fill = grass_colour, colour = line_colour) +
+      
+    ## adding 18 yard box offensive
+    geom_rect(aes(xmin = boxEdgeLeft, xmax = boxEdgeRight, ymin = boxEdgeOff, ymax = xmax), fill = grass_colour, 
+              colour = line_colour) +
+      
+    ## adding goal offensive
+    geom_segment(aes(x = goalPostLeft, y = xmax, xend = goalPostRight, yend = xmax), colour = goal_colour, size = 1) + 
+      
+    ## adding six yard box offensive
+    geom_rect(aes(xmin = sixYardLeft, xmax = sixYardRight, ymin = sixYardOff, ymax = xmax), fill = grass_colour, 
+              colour = line_colour) + 
+      
+    ## adding the arc circle
+    geom_path(data = dArc, aes(x = x, y = y), colour = line_colour) + 
+      
+    ## adding penalty spot
+    geom_point(aes(x = CentreSpot, y = penSpotOff), colour = line_colour)
+  
+  return(p)
+}
+
+statsBomb_halfPitch("#538032", "#ffffff", "#538032", "#000000")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
